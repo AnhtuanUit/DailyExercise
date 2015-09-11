@@ -292,10 +292,10 @@ function saveMessageInExistRoomId(data, callback) {
                 room = r;
                 return cb(!r, 'Room does not exist');
             });
-        },
+        }/*,
         checkUserInRoom: function(cb) {
             return cb(Utilities.getIndex(room.members, data.sender._id) === -1, 'Access denied');
-        }
+        }*/
     }, function(err, results) {
         if (err) {
             var keys = Object.keys(results);
