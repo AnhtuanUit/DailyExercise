@@ -127,7 +127,7 @@ function connectIO(server) {
                         }
                     };
                     // Find on database
-                    UserDevices.findOne(deviceInfo, function(err, device) {
+                   /* UserDevices.findOne(deviceInfo, function(err, device) {
                         // If not found, add current device to user devices list
                         if (!device) {
                             var newDevice = new UserDevices(deviceInfo);
@@ -139,7 +139,7 @@ function connectIO(server) {
                             device.status = Config.UserDevices.Status.Online;
                             device.save();
                         }
-                    });
+                    });*/
                     return cb();
                 },
                 setOnline: function(cb) {
