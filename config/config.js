@@ -9,7 +9,7 @@ module.exports = {
             },
         },
         'production': {
-            'Database': 'mongodb://127.0.0.1/Note',
+            'Database': 'mongodb://127.0.0.1/DailyExercise',
             'Image': 'https://s3.amazonaws.com/SiyaplaceDev/',
             'Redis': {
                 'Host': '127.0.0.1',
@@ -17,9 +17,39 @@ module.exports = {
             }
         }
     },
-
-    'JWTSecret': 'SiyaplaceSecret',
     
+    'S3': {
+        'UploadPath': process.cwd() + '/uploads/',
+        'BucketName': 'SiyaplaceDev',
+        'Key': 'AKIAIOIR6IND44TFBQHA',
+        'Image': {
+            'Width': 320,
+            'Height': 240
+        }
+    },
+    'JWTSecret': 'DailyExerciseSecret',
+    'Populate': {
+        // 'User': 'username avatar gender country isPublicSeen statistic phone',
+        'User': 'username avatar gender isPublicSeen isOnline',
+        'UserFull': '-salt -hashed_password',
+        'File': 'name originalName extension size type createdAt',
+        'Image': 'name',
+        'Event': 'title address startAt endAt createdAt statistic phones type mode avatar cover _userId desc',
+        'EventFull': 'title address startAt endAt createdAt statistic phones type mode _userId latitude longitude cover avatar desc',
+        'Activities': {
+            'Event': 'title avatar',
+            'Post': '_eventId content',
+            'Comment': '_postId content'
+        }
+    },
+    'GetPerQuery': {
+        'Messages': 20,
+        'Notifications': 10,
+        'Activities': 10,
+        'Timeline': 15,
+        'Stickers': 12,
+        'Follower': 30
+    },
     'User': {
         'Types': {
             'Local': 1,
@@ -29,7 +59,10 @@ module.exports = {
             'LinkedIn': 5,
             'Yahoo': 6
         },
-
+        'Access': {
+            'WatingForRemoved': 1,
+            'Disabled': 2
+        },
         'Role': {
             'Admin': 1,
             'User': 2
@@ -38,5 +71,69 @@ module.exports = {
             'Active': 1,
             'Inactive': 2
         }
-    }  
+    },
+    'UserDevices': {
+        'Types': {
+            'PC': 1,
+            'Mobile': 2
+        },
+        'Status': {
+            'Online': 1,
+            'Offline': 2
+        }
+    },
+    
+    'EventMembers': {
+        'Roles': {
+            'Admin': 1,
+            'User': 2
+        },
+        'Status': {
+            'Requested': 1,
+            'Invited': 2,
+            'Joined': 3
+        }
+    },
+    
+    'Messages': {
+        'Types': {
+            'Text': 1,
+            'Image': 2,
+            'File': 3
+        }
+    },
+   
+    'Comments': {
+        'Types': {
+            'Post': 1,
+            'Sub': 2,
+            'File': 3
+        }
+    },
+    'Likes': {
+        'Types': {
+            'Posts': 'Posts',
+            'Comments': 'Comments',
+            'Files': 'Files'
+        }
+    },
+  
+    'Activities': {
+        'Events': {
+            'Create': 100,
+            'Vote': 110
+        },
+        'Posts': {
+            'Create': 200,
+            'Like': 210
+        },
+        'Comments': {
+            'Create': 300,
+            'Like': 310
+        },
+        'Users': {
+            'Follow': 400,
+            'ChangeAvatar': 410
+        }
+    }
 };

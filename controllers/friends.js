@@ -4,6 +4,28 @@ var Users = mongoose.model('Users');
 var Utilities = require('../config/utilities');
 var async = require('async');
 
+exports.queryFriend = function(req, res, next, id) {
+    Utilities.validateObjectId(id, function(isValid) {
+        if (!isValid) {
+            return res.status(404).jsonp(Utilities.response(false, {}, 'Invalid friend id', 404));
+        } else {
+            Friend.findOne({
+                '_id': id
+            }).exec(function(err, friend) {
+                if (err) {
+                    return res.jsonp(Utilities.response(false, {}, Utilities.getErrorMessage(req, err)));
+                } else if (!friend) {
+                    return res.status(404).jsonp(Utilities.response(false, {}, 'Friend not found', 404));
+                } else {
+                    req.friendData = friend;
+                    return next();
+                }
+            });
+        }
+    });
+};
+
+
 exports.addFriend = function  (req, res) {
 	var friend = new Friend(req.body);
 
@@ -18,13 +40,9 @@ exports.addFriend = function  (req, res) {
 };
 
 exports.acceptFriend = function(req, res) {
-    var friendId = req.params.friendId ? req.params.friendId.toString() : "";
-
-    Friend.findOne({'_id': friendId}, function  (err, friend) {
-    	 if (!friend) {
-            return res.jsonp(Utilities.response(false, {}, 'Khong ton tai loi moi ket ban'));
-        } else {
-            friend.update({
+    var friend = req.friendData;
+    
+    friend.update({
                 'success': true
             }, function(err) {
                 if (err) {
@@ -33,8 +51,6 @@ exports.acceptFriend = function(req, res) {
                     return res.jsonp(Utilities.response(true, {}));
                 }
             });
-        }
-    });
 };
 
 exports.getFriendsById = function  (req, res) {

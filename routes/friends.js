@@ -11,4 +11,7 @@ router.post('/acceptFriend/:friendId', FriendsController.acceptFriend);
 
 /* DELETE */
 
+router.param('friendId', FriendsController.queryFriend); // Object
+
+
 module.exports = router;

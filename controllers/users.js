@@ -1,31 +1,39 @@
 var mongoose = require('mongoose');
 var Users = mongoose.model('Users');
+var Rooms = mongoose.model('Rooms');
+var Messages = mongoose.model('Messages');
 var Config = require('../config/config');
 var Utilities = require('../config/utilities');
 var jwt = require('jsonwebtoken');
 var async = require('async');
 
-exports.queryUser = function(req, res, next, id) {
-    Utilities.validateObjectId(id, function(isValid) {
-        if (!isValid) {
-            return res.status(404).jsonp(Utilities.response(false, {}, 'Invalid user id', 404));
+
+
+
+// Get all user's friends // ABCXYZ
+exports.getAllFriends = function(req, res) {
+    Users.find().limit(1000).select(Config.Populate.User + ' phone').lean().exec(function(err, users) {
+        if (err || !users.length) {
+            return res.jsonp(Utilities.response(false, []));
         } else {
-            Users.findOne({
-                '_id': id
-            }).exec(function(err, user) {
-                if (err) {
-                    return res.jsonp(Utilities.response(false, {}, Utilities.getErrorMessage(req, err)));
-                } else if (!user) {
-                    return res.status(404).jsonp(Utilities.response(false, {}, 'User not found', 404));
-                } else {
-                    req.userData = user;
-                    return next();
-                }
+            async.map(users, function(user, cb) {
+                Users.detail(user, null, function(u) {
+                    return cb(null, u);
+                });
+            }, function(err, data) {
+                return res.jsonp(Utilities.response(true, data));
             });
         }
     });
 };
 
+
+
+
+
+/* *************************** NEW CODE ******************************** */
+
+// Middleware
 exports.queryLeanUser = function(req, res, next, id) {
     Utilities.validateObjectId(id, function(isValid) {
         if (!isValid) {
@@ -48,6 +56,29 @@ exports.queryLeanUser = function(req, res, next, id) {
         }
     });
 };
+
+exports.queryUser = function(req, res, next, id) {
+    Utilities.validateObjectId(id, function(isValid) {
+        if (!isValid) {
+            return res.status(404).jsonp(Utilities.response(false, {}, 'Invalid user id', 404));
+        } else {
+            Users.findOne({
+                '_id': id,
+                'status': Config.User.Status.Active
+            }).exec(function(err, user) {
+                if (err) {
+                    return res.jsonp(Utilities.response(false, {}, Utilities.getErrorMessage(req, err)));
+                } else if (!user) {
+                    return res.status(404).jsonp(Utilities.response(false, {}, 'User not found', 404));
+                } else {
+                    req.userData = user;
+                    return next();
+                }
+            });
+        }
+    });
+};
+
 // Register an account
 exports.signup = function(req, res) {
     var user;
@@ -59,7 +90,7 @@ exports.signup = function(req, res) {
         formatPhoneNumber: function(cb) {
             // ABCXYZ
             if (user.phone) {
-                user.displayname = user.phone.trim();
+                user.phone = user.phone.trim();
             }
             return cb(null);
         },
@@ -88,7 +119,6 @@ exports.signup = function(req, res) {
         if (err) {
             var keys = Object.keys(results);
             var last = keys[keys.length - 1];
-           // console.log(results);
             return res.jsonp(Utilities.response(false, {}, results[last]));
         } else {
             return res.jsonp(Utilities.response(true, {
@@ -99,13 +129,16 @@ exports.signup = function(req, res) {
     });
 };
 
+
+
+
+
+
 // Change password
 exports.changePassword = function(req, res) {
     var oldPassword = req.body.oldPassword ? req.body.oldPassword.toString() : '';
     var newPassword = req.body.newPassword ? req.body.newPassword.toString() : '';
-
     var user = req.userData;
-    console.log(user);
     // Check old password, if not correct, return
     if (!user.checkLogin(oldPassword)) {
         return res.jsonp(Utilities.response(false, {}, 'Old password was not correct'));
@@ -124,57 +157,6 @@ exports.changePassword = function(req, res) {
     }
 };
 
-// Change avatar
-exports.changeAvatar = function(req, res) {
-    // Return if no file
-    if (!req.files.file) {
-        return res.jsonp(Utilities.response(false, {}, 'No file to upload'));
-    } else {
-        var newName;
-        async.series({
-            uploadAvatar: function(cb) {
-                Files.upload(req.files.file, function(err, msg) {
-                    newName = msg;
-                    return cb(err, msg);
-                });
-            },
-            updateUser: function(cb) {
-                var oldAvatar = req.user.avatar;
-                req.user.avatar = newName;
-                req.user.save(function(err) {
-                    if (err) {
-                        return cb(true, Utilities.getErrorMessage(req, err));
-                    } else {
-                        // If have old avatar, remove it on S3
-                        if (oldAvatar) {
-                            Utilities.removeFileFromS3(oldAvatar, Config.Messages.Types.Image);
-                        }
-                        return cb(null);
-                    }
-                });
-            },
-            createActivity: function(cb) {
-                // Create activity
-                var activity = new Activities({
-                    '_userId': req.user._id,
-                    'type': Config.Activities.Users.ChangeAvatar
-                });
-                activity.save();
-                return cb(null);
-            }
-        }, function(err, results) {
-            if (err) {
-                var keys = Object.keys(results);
-                var last = keys[keys.length - 1];
-                return res.jsonp(Utilities.response(false, [], results[last]));
-            } else {
-                return res.jsonp(Utilities.response(true, {
-                    'avatar': newName
-                }));
-            }
-        });
-    }
-};
 
 // Get user by id
 exports.getUserById = function(req, res) {
@@ -198,7 +180,8 @@ exports.login = function(req, res) {
             async.parallel({
                 findByEmail: function(cb1) {
                     Users.findOne({
-                            'username': username
+                            'email': username,
+                            'status': Config.User.Status.Active
                         })
                         .select('-accType -socialProfile')
                         .exec(function(err, u) {
@@ -207,13 +190,29 @@ exports.login = function(req, res) {
                             }
                             return cb1();
                         });
+                },
+                findByPhoneNumber: function(cb1) {
+                    Users.findOne({
+                            'phone': username,
+                            'status': Config.User.Status.Active
+                        })
+                        .select('-accType -socialProfile')
+                        .exec(function(err, u) {
+                            if (u) {
+                                
+                                user = u;
+                                console.log(u.toObject());
+                                console.log(u);
+                            }
+                            return cb1();
+                        });
                 }
             }, function() {
-                return cb(!user, 'Incorrect username or password');
+                return cb(!user, 'Incorrect email/phone number or password');
             });
         },
         checkPassword: function(cb) {
-            return cb(!user.checkLogin(password), 'Incorrect username or password');
+            return cb(!user.checkLogin(password), 'Incorrect email/phone number or password');
         },
         getUserInformations: function(cb) {
             Users.getFullInformations(user, null, function(data) {
@@ -227,7 +226,8 @@ exports.login = function(req, res) {
                 _id: user._id,
                 username: user.username,
                 avatar: user.avatar,
-                gender: user.gender
+                gender: user.gender,
+                role: user.role
             };
             // Create token
             var token = jwt.sign(profile, Config.JWTSecret);
@@ -245,24 +245,51 @@ exports.login = function(req, res) {
     });
 };
 
+// Logout // ABCXYZ Do something when user logout
 exports.logout = function(req, res) {
     return res.jsonp(Utilities.response(true));
 };
 
 
-exports.getAllFriends = function(req, res) {
-    Users.find(function(err, users) {
-        if (err || !users.length) {
-            return res.jsonp(Utilities.response(false, []));
+// Update user informations
+exports.updateUserById = function(req, res) {
+    var user = req.userData;
+    // Pick needed fields and extend user
+    var data = Utilities.pickFields(req.body, ['username', 'gender', 'address', 'phone', 'desc']);
+    Utilities.extendObject(user, data);
+
+    // Remove email, role, password and salt fields (if have)
+    var removeFields = ['email', 'hashed_password', 'salt'];
+    if (req.user.role !== 1) {
+        removeFields.push('role');
+        removeFields.push('status');
+    }
+    for (var i in removeFields) {
+        user[removeFields[i]] = undefined;
+        delete user[removeFields[i]];
+    }
+
+    user.save(function(err) {
+        if (err) {
+            return res.jsonp(Utilities.response(false, {}, Utilities.getErrorMessage(req, err)));
         } else {
-            async.map(users, function(user, cb) {
-                Users.detail(user, null, function(u) {
-                    return cb(null, u);
-                });
-            }, function(err, data) {
-                return res.jsonp(Utilities.response(true, data));
-            });
+            return res.jsonp(Utilities.response(true, user.toObject()));
         }
     });
 };
+
+// Inactive user
+exports.inactiveUserById = function(req, res) {
+    var user = req.userData;
+    user.update({
+        'status': Config.User.Status.Inactive
+    }, function(err) {
+        if (err) {
+            return res.jsonp(Utilities.response(false, {}, Utilities.getErrorMessage(req, err)));
+        } else {
+            return res.jsonp(Utilities.response(true));
+        }
+    });
+};
+
 

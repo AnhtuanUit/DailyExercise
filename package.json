@@ -22,6 +22,8 @@
     "express-jwt": "^2.1.0",
     "gm": "^1.17.0",
     "jsonwebtoken": "^4.2.1",
-    "multer": "^0.1.8"
+    "multer": "^0.1.8",
+    "sanitizer": "^0.1.2",
+    "redis": "^0.12.1"
   }
 }

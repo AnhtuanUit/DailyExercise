@@ -1,9 +1,25 @@
 var Config = require('./config');
 
 var Underscore = require('underscore');
+
 var fs = require('fs');
+
+
 var checkForHexRegExp = new RegExp('^[0-9a-fA-F]{24}$');
 var chars = '0123456789';
+// var logger = new(winston.Logger)({
+//     transports: [
+//         new(winston.transports.Console)({
+//             timestamp: function() {
+//                 return Moment(this).format('DD/MM/YYYY')
+//             },
+//             colorize: true
+//         }),
+//         new(winston.transports.File)({
+//             filename: process.cwd() + '/logger/' + logFileName
+//         })
+//     ]
+// });
 
 
 exports.validateObjectId = function(id, callback) {
@@ -50,4 +66,26 @@ exports.pickFields = function(obj, fields) {
         }
         return result;
     }
+};
+
+
+
+
+
+
+exports.formatPhoneNumbers = function(phones, callback) {
+    return callback([]);
+};
+
+
+
+
+
+exports.getFileUrl = function(name, callback) {
+    var params = {
+        'Key': name
+    };
+    S3.getSignedUrl('getObject', params, function(err, url) {
+        return callback(url);
+    });
 };
