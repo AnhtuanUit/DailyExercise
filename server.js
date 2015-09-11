@@ -6,7 +6,7 @@ var app = require('./app');
 app.set('port', process.env.PORT || 3010);
 
 var server = app.listen(app.get('port'), function() {
-    //var socketIO = require('./socketio')(server);
+    var socketIO = require('./socketio')(server);
     // debug('Express server listening on port ' + server.address().port);
     console.log('Express server listening on port ' + server.address().port);
 });
