@@ -194,16 +194,7 @@ function connectIO(server) {
                                     }
                                 }
                                 // Update user database too
-                                UserInRoomStatus.update({
-                                    '_userId': mem,
-                                    '_roomId': result.data.room._id
-                                }, {
-                                    $inc: {
-                                        unread: 1
-                                    }
-                                }, {
-                                    upsert: true
-                                }).exec();
+                            
                             });
                             return cb();
                         });
@@ -218,15 +209,7 @@ function connectIO(server) {
                 socket.emit('seen', Utilities.response(false, data, 'Invalid informations'));
             } else {
                 // Update user status in room
-                UserInRoomStatus.update({
-                    '_userId': userInfo._id.toString(),
-                    '_roomId': data.roomId
-                }, {
-                    $set: {
-                        unread: 1,
-                        lastSeen: Date.now()
-                    }
-                }).exec();
+               
                 socket.emit('seen', Utilities.response(true, data));
             }
         }
