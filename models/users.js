@@ -139,97 +139,6 @@ UserSchema.methods = {
         for (var i in fields) {
             that[fields[i]] = sanitizer.sanitize(that[fields[i]]);
         }
-    },
-    updateFollowings: function(addContacts, removeContacts, callback) {
-        var Follows = mongoose.model('Follow');
-        var Users = mongoose.model('Users');
-        var userId = this._id.toString();
-
-        async.parallel({
-            add: function(cb) {
-                if (!addContacts.length) {
-                    return cb(null, []);
-                }
-                var adds = [];
-                async.each(addContacts, function(contact, cb1) {
-                    Users.findOne({
-                        'phone': contact
-                    }).select(Config.Populate.User).lean().exec(function(err, user) {
-                        if (!user) {
-                            return cb1();
-                        } else {
-                            // Find follow document is exist or not
-                            var options = {
-                                '_userId': userId,
-                                '_followId': user._id
-                            };
-                            Follows.count(options, function(err, c) {
-                                if (c) {
-                                    return cb1();
-                                } else {
-                                    var follow = new Follows(options);
-                                    follow.save(function(err) {
-                                        if (err) {
-                                            return cb1();
-                                        } else {
-                                            // Get user informations
-                                            Users.detail(user, null, function(u) {
-                                                adds.push(u);
-                                                return cb1();
-                                            });
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }, function(err) {
-                    return cb(null, adds);
-                });
-            },
-            remove: function(cb) {
-                if (!removeContacts.length) {
-                    return cb(null, []);
-                }
-                var removes = [];
-                async.each(addContacts, function(contact, cb1) {
-                    Users.findOne({
-                        'phone': contact
-                    }).select(Config.Populate.User).lean().exec(function(err, user) {
-                        if (!user) {
-                            return cb1();
-                        } else {
-                            // Find follow document is exist or not
-                            var options = {
-                                '_userId': userId,
-                                '_followId': user._id
-                            };
-                            Follows.findOne(options, function(err, c) {
-                                if (!c) {
-                                    return cb1();
-                                } else {
-                                    c.remove(function(err) {
-                                        if (err) {
-                                            return cb1();
-                                        } else {
-                                            // Get user informations
-                                            Users.detail(user, null, function(u) {
-                                                removes.push(u);
-                                                return cb1();
-                                            });
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }, function(err) {
-                    return cb(null, removes);
-                });
-            }
-        }, function(err, data) {
-            return callback(data.add, data.remove);
-        });
     }
 };
 
@@ -261,14 +170,6 @@ UserSchema.statics = {
             }
         }
     },
-    getFollowingArray: function(targetId, callback) {
-        var that = this;
-        mongoose.model('Follow').find({
-            '_userId': targetId
-        }).distinct('_followId', function(err, follows) {
-            return callback(follows);
-        });
-    },
     getFullInformations: function(user, userId, callback) {
         console.log(user._id);
         console.log(userId);
@@ -280,15 +181,6 @@ UserSchema.statics = {
                 that.avatar(user, function(avatar) {
                     return cb(null, avatar);
                 });
-            },
-            isFollow: function(cb) {
-                if (!userId || (userId === user._id)) {
-                    return cb(null, false);
-                } else {
-                    mongoose.model('Follow').isFollow(userId, user._id, function(isFollow) {
-                        return cb(null, isFollow);
-                    });
-                }
             },
             isFollowBack: function(cb) {
                 if (!userId || (userId === user._id)) {
