@@ -7,19 +7,6 @@ var fs = require('fs');
 
 var checkForHexRegExp = new RegExp('^[0-9a-fA-F]{24}$');
 var chars = '0123456789';
-// var logger = new(winston.Logger)({
-//     transports: [
-//         new(winston.transports.Console)({
-//             timestamp: function() {
-//                 return Moment(this).format('DD/MM/YYYY')
-//             },
-//             colorize: true
-//         }),
-//         new(winston.transports.File)({
-//             filename: process.cwd() + '/logger/' + logFileName
-//         })
-//     ]
-// });
 
 
 exports.validateObjectId = function(id, callback) {
@@ -46,8 +33,6 @@ exports.getErrorMessage = function(req, err) {
         errText = err.message;
     }
 
-    // Create log to log file
-    // logger.log('error', '[' + this.formatDate(new Date()) + '] ' + req.method + ' ' + req.originalUrl + ': ' + errText);
 
     return errText;
 };

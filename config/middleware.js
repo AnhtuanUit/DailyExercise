@@ -86,7 +86,8 @@ exports.isPostCreator = function(req, res, next) {
 };
 
 exports.isCommentCreator = function(req, res, next) {
-	if ((req.commentData._userId.toString() === req.user._id.toString()) || (req.user.role === 1)) {
+
+	if ((req.commentData._userId._id.toString() === req.user._id.toString())) {
 		return next();
 	} else {
 		return res.status(401).jsonp(Utilities.response(false, {}, 'Access denied', 401));

@@ -8,7 +8,8 @@ router.get('/getUserById/:leanUserId', UsersController.getUserById);
 // router.get('/getUserUnreadMessages', UsersController.getUserUnreadMessages);
 
 router.get('/getAllFriends', UsersController.getAllFriends);
-
+router.get('/getChatHistory', UsersController.getChatHistory);
+router.get('/getContact', UsersController.getContact);
 
 /* POST */
 router.post('/signup', UsersController.signup);
@@ -17,6 +18,8 @@ router.post('/logout', UsersController.logout);
 
 
 router.put('/changePassword/:userId', middleware.isAuthentication, UsersController.changePassword);
+router.put('/changeAvatar/:userId', middleware.isAuthentication, UsersController.changeAvatar);
+
 
 /* DELETE */
 router.delete('/inactiveUserById/:userId', middleware.isAdmin, UsersController.inactiveUserById);

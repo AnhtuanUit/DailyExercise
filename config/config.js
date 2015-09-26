@@ -29,8 +29,8 @@ module.exports = {
     },
     'JWTSecret': 'DailyExerciseSecret',
     'Populate': {
-        // 'User': 'username avatar gender country isPublicSeen statistic phone',
-        'User': 'username avatar gender isPublicSeen isOnline',
+        'Friend': 'senderId receiverId success',
+        'User': 'username avatar isOnline gender',
         'UserFull': '-salt -hashed_password',
         'File': 'name originalName extension size type createdAt',
         'Image': 'name',
@@ -119,21 +119,29 @@ module.exports = {
     },
   
     'Activities': {
-        'Events': {
+        'News': {
             'Create': 100,
             'Vote': 110
         },
-        'Posts': {
+        'AddFriend': {
             'Create': 200,
             'Like': 210
         },
-        'Comments': {
+        'AcceptFriend': {
             'Create': 300,
             'Like': 310
-        },
-        'Users': {
-            'Follow': 400,
-            'ChangeAvatar': 410
         }
+    },
+    'Notify': {
+        'type': {
+            'addFriend': 0,
+            'acceptFriend': 1
+        }
+    },
+    'Pagination': {
+        'PostPerEvent': 10,
+        'CommentPerPost': 4,
+        'CommentPerPostDetail': 10,
+        'SubCommentPerComment': 10
     }
 };

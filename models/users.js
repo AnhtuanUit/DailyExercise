@@ -83,20 +83,6 @@ var UserSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    statistic: {
-        'followers': {
-            type: Number,
-            default: 0
-        },
-        'followings': {
-            type: Number,
-            default: 0
-        },
-        'joiningEvent': {
-            type: Number,
-            default: 0
-        }
-    },
     isOnline: {
         type: Boolean,
         default: true
@@ -161,9 +147,9 @@ UserSchema.statics = {
     },
     avatar: function(user, callback) {
         if (user && user.avatar) {
-            return callback(Config.Env[process.env.NODE_ENV].Image + user.avatar);
+            return callback(user.avatar);
         } else {
-            if (user && user.gender === 1) {
+            if (user && user.gender == 1) {
                 return callback(Config.Env[process.env.NODE_ENV].Image + 'male.png');
             } else {
                 return callback(Config.Env[process.env.NODE_ENV].Image + 'female.png');
@@ -173,7 +159,7 @@ UserSchema.statics = {
     getFullInformations: function(user, userId, callback) {
         console.log(user._id);
         console.log(userId);
-      
+        
 
         var that = this;
         async.parallel({
@@ -181,15 +167,6 @@ UserSchema.statics = {
                 that.avatar(user, function(avatar) {
                     return cb(null, avatar);
                 });
-            },
-            isFollowBack: function(cb) {
-                if (!userId || (userId === user._id)) {
-                    return cb(null, false);
-                } else {
-                    mongoose.model('Follow').isFollow(user._id, userId, function(isFollow) {
-                        return cb(null, isFollow);
-                    });
-                }
             }
         }, function(err, data) {
             // Remove fields
@@ -210,44 +187,35 @@ UserSchema.statics = {
             delete data.isFollowBack;
             return callback(Utilities.extendObject(user.toObject(), data));
         });
-    },
-    detail: function(user, userId, callback) {
-        var that = this;
-        async.parallel({
-            avatar: function(cb) {
-                that.avatar(user, function(avatar) {
-                    return cb(null, avatar);
-                });
-            },
-            isFollow: function(cb) {
-                if (!userId || (userId === user._id)) {
-                    return cb(null, false);
-                } else {
-                    mongoose.model('Follow').isFollow(userId, user._id, function(isFollow) {
-                        return cb(null, isFollow);
-                    });
-                }
-            }
-        }, function(err, data) {
+},
+detail: function(user, userId, callback) {
+    var that = this;
+    async.parallel({
+        avatar: function(cb) {
+            that.avatar(user, function(avatar) {
+                return cb(null, avatar);
+            });
+        }
+    }, function(err, data) {
             // Pick fields
             var userInfo = Utilities.pickFields(user, ['_id', 'username', 'avatar', 'isOnline']);
             return callback(Utilities.extendObject(userInfo, data));
         });
-    },
-    getInformationById: function(targetId, userId, callback) {
-        var that = this;
-        that.findOne({
-            '_id': targetId
-        }).select(Config.Populate.User).lean().exec(function(err, u) {
-            if (err || !u) {
-                return callback({});
-            } else {
-                that.detail(u, userId, function(user) {
-                    return callback(user);
-                });
-            }
-        });
-    }
+},
+getInformationById: function(targetId, userId, callback) {
+    var that = this;
+    that.findOne({
+        '_id': targetId
+    }).select(Config.Populate.User).lean().exec(function(err, u) {
+        if (err || !u) {
+            return callback({});
+        } else {
+            that.detail(u, userId, function(user) {
+                return callback(user);
+            });
+        }
+    });
+}
 };
 
 // Pre-save hook
@@ -258,79 +226,11 @@ UserSchema.pre('save', function(next) {
     next();
 });
 
-// Post-save hook
-UserSchema.post('save', function(user) {
-    // If create new
-    if (user._isNew) {
-        // Do some actions
-        async.parallel({
-            follow: function(cb) {
-                // ABCXYZ Find famous or populate users to follow
-                mongoose.model('Users').find({
-                    '_id': {
-                        $ne: user._id.toString()
-                    }
-                }).limit(40).select('').lean().exec(function(err, users) {
-                    if (err || !users || !users.length) {
-                        return cb();
-                    } else {
-                        var Follow = mongoose.model('Follow');
-                        async.each(users, function(u, cb1) {
-                            var follow = new Follow({
-                                '_userId': user._id.toString(),
-                                '_followId': u._id.toString()
-                            });
-                            follow.save();
-                            return cb1();
-                        }, function() {
-                            return cb();
-                        });
-                    }
-                });
-            }
-        });
-    }
-    // If update informations
-    else {
-        console.log('Updated user ' + user._id);
-    }
-});
 
 // Post-remove hook
 UserSchema.post('remove', function(user) {
     console.log('Removed user ' + user._id);
 });
 
-/* ********************** USER DEVICE ******************************* */
-var UserDevicesSchema = new Schema({
-    _userId: {
-        required: true,
-        type: Schema.Types.ObjectId,
-        ref: 'Users'
-    },
-    status: {
-        type: Number,
-        default: Config.UserDevices.Status.Online
-    },
-    deviceId: String,
-    informations: {
-        ip: String,
-        osVersion: String,
-        osType: String
-    },
-    type: {
-        type: Number,
-        default: Config.UserDevices.Types.PC
-    },
-    lastActivedAt: Date,
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-}, {
-    collection: 'userDevices'
-});
-
-// Export model
 module.exports = mongoose.model('Users', UserSchema);
-module.exports = mongoose.model('UserDevices', UserDevicesSchema);
+

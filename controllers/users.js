@@ -1,7 +1,8 @@
 var mongoose = require('mongoose');
 var Users = mongoose.model('Users');
-var Rooms = mongoose.model('Rooms');
 var Messages = mongoose.model('Messages');
+var Friends = mongoose.model('Friends');
+var Files = require('../controllers/files');
 var Config = require('../config/config');
 var Utilities = require('../config/utilities');
 var jwt = require('jsonwebtoken');
@@ -29,7 +30,38 @@ exports.getAllFriends = function(req, res) {
 
 
 
+exports.getContact = function  (req, res) {
+    var userId = req.user._id;
+    
+    var allFriend ;
+    Friends.find({$or: [{'senderId': userId},{'receiverId': userId}], success: true}, function  (err, friend) {
+        if (err) {
+            return res.jsonp(Utilities.response(false, {}, Utilities.getErrorMessage(req, err)));
+        } else {
+            async.map(friend, function(friend, cb) {
+                Friends.getUserId(friend, userId, function(u) {
+                    return cb(null, u);
+                });
+            }, function(err, data) {
+                Users.find({$or: data},function(err, users) {
+                    if (err || !users.length) {
+                        return res.jsonp(Utilities.response(false, []));
+                    } else {
+                        async.map(users, function(user, cb) {
+                            Users.detail(user, null, function(u) {
+                                return cb(null, u);
+                            });
+                        }, function(err, data) {
+                            return res.jsonp(Utilities.response(true, data));
+                        });
+                    }
+                });
+            });
+        }
+    });
 
+
+}
 
 /* *************************** NEW CODE ******************************** */
 
@@ -131,9 +163,6 @@ exports.signup = function(req, res) {
 
 
 
-
-
-
 // Change password
 exports.changePassword = function(req, res) {
     var oldPassword = req.body.oldPassword ? req.body.oldPassword.toString() : '';
@@ -157,7 +186,51 @@ exports.changePassword = function(req, res) {
     }
 };
 
+// Change avatar
+exports.changeAvatar = function(req, res) {
+    var avatarName = req.body.thumbnail;
+    if (false) {
+        return res.jsonp(Utilities.response(false, {}, 'No file to upload'));
+    } else {
+        
+        async.series ({
+     /*       uploadAvatar: function (cb) {
+                Files.uploadImage(req, res, function (err, results, newName) {
+                    avatarName = newName;
+                console.log(newName);                  
+                    if (err) {
+                        return cb(true, results + "uploadAvatar");
+                    } else{
+                        
+                        return cb(null);
+                    };
+                    
+                    
+                });
+            },*/
+            updateUser: function(cb) {
+                req.userData.update({'avatar': avatarName}, function (err) {
+                    if (err) {
+                        return cb(true, Utilities.getErrorMessage(req, err));
+                    } else {
+                    
+                        return cb(null);
+                    }
+                });
+            }
+        }, function (err, results) {
+            if(err) {
+                var keys = Object.keys(results);
+                var last = keys[keys.length - 1];
+                return res.jsonp (Utilities.response(false, {}, results[last]));
 
+            } 
+            else{
+                res.jsonp (Utilities.response(true, {'avatar': avatarName}));
+            }
+        });
+    }
+};
 // Get user by id
 exports.getUserById = function(req, res) {
     var userId = req.user ? req.user._id.toString() : '';
@@ -180,55 +253,51 @@ exports.login = function(req, res) {
             async.parallel({
                 findByEmail: function(cb1) {
                     Users.findOne({
-                            'email': username,
-                            'status': Config.User.Status.Active
-                        })
-                        .select('-accType -socialProfile')
-                        .exec(function(err, u) {
-                            if (u) {
-                                user = u;
-                            }
-                            return cb1();
-                        });
+                        'email': username,
+                        'status': Config.User.Status.Active
+                    })
+                    .select('-accType -socialProfile')
+                    .exec(function(err, u) {
+                        if (u) {
+                            user = u;
+                        }
+                        return cb1();
+                    });
                 },
                 findByPhoneNumber: function(cb1) {
                     Users.findOne({
-                            'phone': username,
-                            'status': Config.User.Status.Active
-                        })
-                        .select('-accType -socialProfile')
-                        .exec(function(err, u) {
-                            if (u) {
-                                
-                                user = u;
-                                console.log(u.toObject());
-                                console.log(u);
-                            }
-                            return cb1();
-                        });
+                        'username': username,
+                        'status': Config.User.Status.Active
+                    })
+                    .select('-accType -socialProfile')
+                    .exec(function(err, u) {
+                        if (u) {
+                            user = u;
+                        }
+                        return cb1();
+                    });
                 }
             }, function() {
                 return cb(!user, 'Incorrect email/phone number or password');
             });
-        },
-        checkPassword: function(cb) {
-            return cb(!user.checkLogin(password), 'Incorrect email/phone number or password');
-        },
-        getUserInformations: function(cb) {
-            Users.getFullInformations(user, null, function(data) {
-                user = data;
-                console.log(data);
-                return cb(null);
-            });
-        },
-        createToken: function(cb) {
-            var profile = {
-                _id: user._id,
-                username: user.username,
-                avatar: user.avatar,
-                gender: user.gender,
-                role: user.role
-            };
+},
+checkPassword: function(cb) {
+    return cb(!user.checkLogin(password), 'Incorrect email/phone number or password');
+},
+getUserInformations: function(cb) {
+    Users.getFullInformations(user, null, function(data) {
+        user = data;
+        return cb(null);
+    });
+},
+createToken: function(cb) {
+    var profile = {
+        _id: user._id,
+        username: user.username,
+        avatar: user.avatar,
+        gender: user.gender,
+        role: user.role
+    };
             // Create token
             var token = jwt.sign(profile, Config.JWTSecret);
             user.token = token;
@@ -292,4 +361,18 @@ exports.inactiveUserById = function(req, res) {
     });
 };
 
+
+exports.getChatHistory = function(req, res) {
+    // Get params
+    var userId = req.user._id.toString();
+
+    Messages.find({
+        '_userId': userId,
+    /*    'updatedAt': {
+            $lt: timestamp
+        }*/
+    },function  (err, result) {
+        res.jsonp(Utilities.response(true, result));
+    });
+};
 
