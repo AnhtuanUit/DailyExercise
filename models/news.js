@@ -11,7 +11,14 @@ var validateTitle = function(value, callback) {
 
 var NewsSchema = new Schema({
 
-    description: String,
+    description: {
+        type:String,
+        required:true
+    },
+    content: {
+        type:String,
+        required:true
+    },
     _userId: {
         required: true,
         type: Schema.Types.ObjectId,

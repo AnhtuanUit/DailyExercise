@@ -198,7 +198,7 @@ detail: function(user, userId, callback) {
         }
     }, function(err, data) {
             // Pick fields
-            var userInfo = Utilities.pickFields(user, ['_id', 'username', 'avatar', 'isOnline']);
+            var userInfo = Utilities.pickFields(user, ['_id', 'username', 'avatar', 'isOnline', 'longitude','latitude']);
             return callback(Utilities.extendObject(userInfo, data));
         });
 },

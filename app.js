@@ -24,13 +24,28 @@ fs.readdirSync('./models').forEach(function(file) {
     require('./models/' + file);
   }
 });
-
 app.use('/*', expressJwt({
-  secret: config.JWTSecret
+    secret: config.JWTSecret
 }).unless({
-  path: ['/users/login', '/users/logout', '/users/signup',/^\/files\/getFileByPath\/.*/]
+    path: ['/users/login', '/users/logout', '/users/signup',/^\/files\/getFileById\/.*/]
 }));
 
+
+// CORS
+app.use(function(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE, CONNECT');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+
+    // Intercept OPTIONS method
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

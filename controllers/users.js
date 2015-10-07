@@ -13,7 +13,7 @@ var async = require('async');
 
 // Get all user's friends // ABCXYZ
 exports.getAllFriends = function(req, res) {
-    Users.find().limit(1000).select(Config.Populate.User + ' phone').lean().exec(function(err, users) {
+    Users.find().limit(1000).select(Config.Populate.User + ' latitude longitude').lean().exec(function(err, users) {
         if (err || !users.length) {
             return res.jsonp(Utilities.response(false, []));
         } else {

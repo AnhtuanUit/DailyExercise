@@ -5,6 +5,10 @@ var middleware = require('../config/middleware');
 
 /* GET */
 router.get('/getUserById/:leanUserId', UsersController.getUserById);
+
+router.get('/', function  (req, res) {
+	res.jsonp({'title': 'zz'});
+});
 // router.get('/getUserUnreadMessages', UsersController.getUserUnreadMessages);
 
 router.get('/getAllFriends', UsersController.getAllFriends);
