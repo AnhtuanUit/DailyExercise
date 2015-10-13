@@ -192,7 +192,7 @@ exports.changeAvatar = function(req, res) {
     if (false) {
         return res.jsonp(Utilities.response(false, {}, 'No file to upload'));
     } else {
-        
+
         async.series ({
      /*       uploadAvatar: function (cb) {
                 Files.uploadImage(req, res, function (err, results, newName) {
@@ -207,29 +207,29 @@ exports.changeAvatar = function(req, res) {
                     
                     
                 });
-            },*/
-            updateUser: function(cb) {
-                req.userData.update({'avatar': avatarName}, function (err) {
-                    if (err) {
-                        return cb(true, Utilities.getErrorMessage(req, err));
-                    } else {
-                    
-                        return cb(null);
-                    }
-                });
-            }
-        }, function (err, results) {
-            if(err) {
-                var keys = Object.keys(results);
-                var last = keys[keys.length - 1];
-                return res.jsonp (Utilities.response(false, {}, results[last]));
+    },*/
+    updateUser: function(cb) {
+        req.userData.update({'avatar': avatarName}, function (err) {
+            if (err) {
+                return cb(true, Utilities.getErrorMessage(req, err));
+            } else {
 
-            } 
-            else{
-                res.jsonp (Utilities.response(true, {'avatar': avatarName}));
+                return cb(null);
             }
         });
     }
+}, function (err, results) {
+    if(err) {
+        var keys = Object.keys(results);
+        var last = keys[keys.length - 1];
+        return res.jsonp (Utilities.response(false, {}, results[last]));
+
+    } 
+    else{
+        res.jsonp (Utilities.response(true, {'avatar': avatarName}));
+    }
+});
+}
 };
 // Get user by id
 exports.getUserById = function(req, res) {
@@ -346,6 +346,33 @@ exports.updateUserById = function(req, res) {
         }
     });
 };
+
+exports.addLocation = function(req, res) {
+    var user = req.userData;
+    console.log(req.body);
+    // Remove email, role, password and salt fields (if have)
+     var data = Utilities.pickFields(req.body, ['latitude','longitude']);
+    Utilities.extendObject(user, data);
+
+    var removeFields = ['email', 'hashed_password', 'salt'];
+    if (req.user.role !== 1) {
+        removeFields.push('role');
+        removeFields.push('status');
+    }
+    for (var i in removeFields) {
+        user[removeFields[i]] = undefined;
+        delete user[removeFields[i]];
+    }
+    mongoose.model('Users').update({ _id: req.params.userId }, { $set: { latitude: req.body.latitude , longitude: req.body.longitude}}, function  (err) {
+        if (err) {
+            return res.jsonp(Utilities.response(false, {}, Utilities.getErrorMessage(req, err)));
+        } else {
+            return res.jsonp(Utilities.response(true, user.toObject()));
+        }
+    });
+
+};
+
 
 // Inactive user
 exports.inactiveUserById = function(req, res) {

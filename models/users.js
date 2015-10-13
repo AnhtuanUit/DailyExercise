@@ -44,15 +44,27 @@ var UserSchema = new Schema({
         validate: [validatePassword, 'Password cannot be blank']
     },
     salt: String,
-    phone: String,
+    phone: {
+        required:true,
+        type: String
+    },
     avatar: String,
     address: String,
     addressComponents: {},
     city: {},
-    country: {},
+    country: {
+        required: true,
+        type: String
+    },
     desc: String,
-    latitude: Number,
-    longitude: Number,
+    latitude: {
+        type: String,
+        default: "10.870566"
+    },
+    longitude: {
+        type: String,
+        default: "106.803053"
+    },
     status: {
         type: Number,
         default: Config.User.Status.Active
@@ -187,35 +199,35 @@ UserSchema.statics = {
             delete data.isFollowBack;
             return callback(Utilities.extendObject(user.toObject(), data));
         });
-},
-detail: function(user, userId, callback) {
-    var that = this;
-    async.parallel({
-        avatar: function(cb) {
-            that.avatar(user, function(avatar) {
-                return cb(null, avatar);
-            });
-        }
-    }, function(err, data) {
+    },
+    detail: function(user, userId, callback) {
+        var that = this;
+        async.parallel({
+            avatar: function(cb) {
+                that.avatar(user, function(avatar) {
+                    return cb(null, avatar);
+                });
+            }
+        }, function(err, data) {
             // Pick fields
             var userInfo = Utilities.pickFields(user, ['_id', 'username', 'avatar', 'isOnline', 'longitude','latitude']);
             return callback(Utilities.extendObject(userInfo, data));
         });
-},
-getInformationById: function(targetId, userId, callback) {
-    var that = this;
-    that.findOne({
-        '_id': targetId
-    }).select(Config.Populate.User).lean().exec(function(err, u) {
-        if (err || !u) {
-            return callback({});
-        } else {
-            that.detail(u, userId, function(user) {
-                return callback(user);
-            });
-        }
-    });
-}
+    },
+    getInformationById: function(targetId, userId, callback) {
+        var that = this;
+        that.findOne({
+            '_id': targetId
+        }).select(Config.Populate.User).lean().exec(function(err, u) {
+            if (err || !u) {
+                return callback({});
+            } else {
+                that.detail(u, userId, function(user) {
+                    return callback(user);
+                });
+            }
+        });
+    }
 };
 
 // Pre-save hook

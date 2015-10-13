@@ -23,6 +23,7 @@ router.post('/logout', UsersController.logout);
 
 router.put('/changePassword/:userId', middleware.isAuthentication, UsersController.changePassword);
 router.put('/changeAvatar/:userId', middleware.isAuthentication, UsersController.changeAvatar);
+router.put('/addLocation/:userId', middleware.isAuthentication, UsersController.addLocation)
 
 
 /* DELETE */
