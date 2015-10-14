@@ -13,7 +13,7 @@ var async = require('async');
 
 // Get all user's friends // ABCXYZ
 exports.getAllFriends = function(req, res) {
-    Users.find().limit(1000).select(Config.Populate.User + ' latitude longitude').lean().exec(function(err, users) {
+    Users.find().limit(1000).select(Config.Populate.User + ' latitude longitude phone country').lean().exec(function(err, users) {
         if (err || !users.length) {
             return res.jsonp(Utilities.response(false, []));
         } else {
@@ -146,6 +146,14 @@ exports.signup = function(req, res) {
             // Create token
             token = jwt.sign(profile, Config.JWTSecret);
             return cb(null, token);
+        },
+        avatar: function(cb) {
+            if (user.gender == 1) {
+                return cb(null, Config.Env[process.env.NODE_ENV].Image + 'male.png');
+            } else {
+                return cb(null, Config.Env[process.env.NODE_ENV].Image + 'female.png');
+            }
+
         }
     }, function(err, results) {
         if (err) {
@@ -155,7 +163,9 @@ exports.signup = function(req, res) {
         } else {
             return res.jsonp(Utilities.response(true, {
                 '_id': user._id,
-                'token': results.token
+                'token': results.token,
+                'username': user.username,
+                'avatar': results.avatar
             }));
         }
     });
@@ -351,7 +361,7 @@ exports.addLocation = function(req, res) {
     var user = req.userData;
     console.log(req.body);
     // Remove email, role, password and salt fields (if have)
-     var data = Utilities.pickFields(req.body, ['latitude','longitude']);
+    var data = Utilities.pickFields(req.body, ['latitude','longitude']);
     Utilities.extendObject(user, data);
 
     var removeFields = ['email', 'hashed_password', 'salt'];

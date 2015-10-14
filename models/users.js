@@ -210,7 +210,7 @@ UserSchema.statics = {
             }
         }, function(err, data) {
             // Pick fields
-            var userInfo = Utilities.pickFields(user, ['_id', 'username', 'avatar', 'isOnline', 'longitude','latitude']);
+            var userInfo = Utilities.pickFields(user, ['_id', 'username', 'avatar', 'isOnline', 'longitude','latitude', 'phone', 'country']);
             return callback(Utilities.extendObject(userInfo, data));
         });
     },
