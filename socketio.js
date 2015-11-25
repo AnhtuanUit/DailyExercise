@@ -138,9 +138,6 @@ function connectIO(server) {
                             return console.log(err);
                         } else {
                             mongoose.model('Friends').detailForSocket(friend, userInfo, function  (data) {
-
-
-
                                 async.each(members, function (mem, cb) {
                                     store.get(mem, function (err, redisData) {
                                         if (redisData) {
@@ -158,24 +155,24 @@ function connectIO(server) {
                     });
 
 
-                } 
-            });
-        }
+} 
+});
+}
 
-        function doAcceptFriend (data) {
-            console.log('data: ' + data);
-            var friendId = data;
+function doAcceptFriend (data) {
+    console.log('data: ' + data);
+    var friendId = data;
 
-            Friends.update({'_id': friendId}, {success: true}, function  (err, friend) {
-              
-                        if (err) {
-                            return console.log(err);    
-                        } else{
-                             var members = [friend.senderId, userInfo._id];
+    Friends.update({'_id': friendId}, {success: true}, function  (err, friend) {
+      
+        if (err) {
+            return console.log(err);    
+        } else{
+         var members = [friend.senderId, userInfo._id];
 
-                            mongoose.model('Friends').detailForSocket(friend, userInfo, function  (data) {
-                              async.each(members, function (mem, cb) {
-                                  store.get(mem, function (err, redisData) {
+         mongoose.model('Friends').detailForSocket(friend, userInfo, function  (data) {
+          async.each(members, function (mem, cb) {
+              store.get(mem, function (err, redisData) {
                                 // If online, emit data
                                 if (redisData) {
                                     redisData = JSON.parse(redisData);
@@ -186,14 +183,14 @@ function connectIO(server) {
 
                             });
 
-                              });
-                          });
-                        }
+          });
+      });
+     }
 
-          
-            });
+     
+ });
 
-        }
+}
 
 
         // Chat action
