@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
 var News = mongoose.model('News');
-var Utilities = require('../Config/utilities');
+var Utilities = require('../config/utilities');
 
 exports.queryNews = function(req, res, next, id) {
     Utilities.validateObjectId(id, function(isValid) {
