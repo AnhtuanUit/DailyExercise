@@ -1,8 +1,8 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-var Config = require('../Config/config');
+var Config = require('../config/config');
 var async = require('async');
-var Utilities = require('../Config/utilities');
+var Utilities = require('../config/utilities');
 
 var FriendSchema = new Schema({
     senderId: {
