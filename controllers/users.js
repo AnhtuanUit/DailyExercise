@@ -204,12 +204,12 @@ exports.changeAvatar = function(req, res) {
     } else {
 
         async.series ({
-     /*       uploadAvatar: function (cb) {
+            uploadAvatar: function (cb) {
                 Files.uploadImage(req, res, function (err, results, newName) {
                     avatarName = newName;
-                console.log(newName);                  
+                    console.log(newName);                  
                     if (err) {
-                        return cb(true, results + "uploadAvatar");
+                        return cb(true, results);
                     } else{
                         
                         return cb(null);
@@ -217,28 +217,28 @@ exports.changeAvatar = function(req, res) {
                     
                     
                 });
-    },*/
-    updateUser: function(cb) {
-        req.userData.update({'avatar': avatarName}, function (err) {
-            if (err) {
-                return cb(true, Utilities.getErrorMessage(req, err));
-            } else {
+            },
+            updateUser: function(cb) {
+                req.userData.update({'avatar': avatarName}, function (err) {
+                    if (err) {
+                        return cb(true, Utilities.getErrorMessage(req, err));
+                    } else {
 
-                return cb(null);
+                        return cb(null);
+                    }
+                });
+            }
+        }, function (err, results) {
+            if(err) {
+                var keys = Object.keys(results);
+                var last = keys[keys.length - 1];
+                return res.jsonp (Utilities.response(false, {}, results[last]));
+
+            } 
+            else{
+                res.jsonp (Utilities.response(true, {'avatar': avatarName}));
             }
         });
-    }
-}, function (err, results) {
-    if(err) {
-        var keys = Object.keys(results);
-        var last = keys[keys.length - 1];
-        return res.jsonp (Utilities.response(false, {}, results[last]));
-
-    } 
-    else{
-        res.jsonp (Utilities.response(true, {'avatar': avatarName}));
-    }
-});
 }
 };
 // Get user by id

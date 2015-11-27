@@ -27,7 +27,7 @@ fs.readdirSync('./models').forEach(function(file) {
 app.use('/*', expressJwt({
     secret: config.JWTSecret
 }).unless({
-    path: ['/users/login', '/users/logout', '/users/signup',/^\/files\/getFileById\/.*/]
+    path: ['/users/login', '/users/logout', '/users/signup',/^\/files\/getFileByPath\/.*/]
 }));
 
 
