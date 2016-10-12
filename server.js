@@ -3,7 +3,7 @@
 var debug = require('debug')('app');
 var app = require('./app');
 
-app.set('port', process.env.PORT || 9007);
+app.set('port', process.env.PORT || 9000);
 
 var server = app.listen(app.get('port'), function() {
     var socketIO = require('./socketio')(server);
